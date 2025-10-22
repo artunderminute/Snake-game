@@ -6,6 +6,9 @@ const ctx = canvas.getContext('2d');
 const GRID_SIZE = 20;
 const TILE_COUNT = canvas.width / GRID_SIZE;
 
+// Theme management
+let currentTheme = localStorage.getItem('snakeGameTheme') || 'light';
+
 // Game state
 let snake = [
     { x: 10, y: 10 }
@@ -29,9 +32,12 @@ const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 const restartBtn = document.getElementById('restartBtn');
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.querySelector('.theme-icon');
 
 // Initialize
 highScoreElement.textContent = highScore;
+applyTheme(currentTheme);
 
 // Event Listeners
 startBtn.addEventListener('click', startGame);
@@ -42,8 +48,29 @@ restartBtn.addEventListener('click', () => {
     resetGame();
     startGame();
 });
+themeToggle.addEventListener('click', toggleTheme);
 
 document.addEventListener('keydown', handleKeyPress);
+
+// Theme Functions
+function toggleTheme() {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    applyTheme(currentTheme);
+    localStorage.setItem('snakeGameTheme', currentTheme);
+}
+
+function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+    // Redraw canvas with new colors
+    if (!gameLoop) {
+        draw();
+    }
+}
+
+function getThemeColor(property) {
+    return getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+}
 
 function handleKeyPress(e) {
     // Prevent default arrow key scrolling
@@ -193,12 +220,19 @@ function generateFood() {
 }
 
 function draw() {
+    // Get theme colors
+    const canvasBg = getThemeColor('--canvas-bg');
+    const gridColor = getThemeColor('--grid-color');
+    const foodColor = getThemeColor('--food-color');
+    const snakeHead = getThemeColor('--snake-head');
+    const snakeBody = getThemeColor('--snake-body');
+
     // Clear canvas
-    ctx.fillStyle = '#f0f0f0';
+    ctx.fillStyle = canvasBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw grid
-    ctx.strokeStyle = '#e0e0e0';
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= TILE_COUNT; i++) {
         ctx.beginPath();
@@ -213,7 +247,7 @@ function draw() {
     }
 
     // Draw food
-    ctx.fillStyle = '#e74c3c';
+    ctx.fillStyle = foodColor;
     ctx.beginPath();
     ctx.arc(
         food.x * GRID_SIZE + GRID_SIZE / 2,
@@ -228,11 +262,11 @@ function draw() {
     snake.forEach((segment, index) => {
         if (index === 0) {
             // Head
-            ctx.fillStyle = '#27ae60';
+            ctx.fillStyle = snakeHead;
         } else {
             // Body - gradient effect
             const opacity = 1 - (index / snake.length) * 0.5;
-            ctx.fillStyle = `rgba(46, 204, 113, ${opacity})`;
+            ctx.fillStyle = `rgba(${snakeBody}, ${opacity})`;
         }
 
         ctx.fillRect(
@@ -244,7 +278,7 @@ function draw() {
 
         // Draw eyes on head
         if (index === 0) {
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = currentTheme === 'dark' ? '#1a1a2e' : 'white';
             const eyeSize = 3;
             const eyeOffsetX = GRID_SIZE / 4;
             const eyeOffsetY = GRID_SIZE / 4;
