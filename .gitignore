@@ -1,1 +1,3 @@
 node_modules/
+*.log
+tunnel-url.txt
